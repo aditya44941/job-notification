@@ -18,3 +18,16 @@
     @apply bg-primary/10 text-primary font-semibold;
   }
 }
+
+@keyframes ring-progress {
+  from {
+    stroke-dashoffset: var(--ring-length);
+  }
+  to {
+    stroke-dashoffset: var(--ring-target);
+  }
+}
+
+.readiness-ring-progress {
+  animation: ring-progress 1200ms ease-out forwards;
+}
