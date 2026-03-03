@@ -10,6 +10,8 @@ import AssessmentsPage from "./pages/AssessmentsPage";
 import ResourcesPage from "./pages/ResourcesPage";
 import ProfilePage from "./pages/ProfilePage";
 import ResultsPage from "./pages/ResultsPage";
+import TestChecklistPage from "./pages/TestChecklistPage";
+import ShipGatePage from "./pages/ShipGatePage";
 
 const router = createBrowserRouter([
   {
@@ -19,6 +21,14 @@ const router = createBrowserRouter([
   {
     path: "/results",
     element: <ResultsPage />,
+  },
+  {
+    path: "/prp/07-test",
+    element: <TestChecklistPage />,
+  },
+  {
+    path: "/prp/08-ship",
+    element: <ShipGatePage />,
   },
   {
     path: "/app",
