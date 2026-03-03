@@ -1,11 +1,13 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
-import { getHistory } from "../lib/history";
+import { getHistory, getHistoryMeta, getHistoryWarningMessage } from "../lib/history";
 
 function ResourcesPage() {
   const navigate = useNavigate();
   const history = useMemo(() => getHistory(), []);
+  const historyMeta = useMemo(() => getHistoryMeta(), []);
+  const historyWarning = useMemo(() => getHistoryWarningMessage(), []);
 
   return (
     <Card>
@@ -14,6 +16,11 @@ function ResourcesPage() {
         <CardDescription>Saved analysis entries from localStorage. Click any entry to open results.</CardDescription>
       </CardHeader>
       <CardContent>
+        {historyMeta.corruptedCount > 0 ? (
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            {historyWarning}
+          </div>
+        ) : null}
         {history.length === 0 ? (
           <div className="rounded-lg border border-dashed border-slate-300 p-6 text-sm text-slate-600">
             No analysis history yet. Go to Practice and run an analysis.
@@ -31,7 +38,7 @@ function ResourcesPage() {
                       {entry.company?.trim() || "Unknown Company"} - {entry.role?.trim() || "General Role"}
                     </p>
                     <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                      Score {entry.readinessScore}/100
+                      Score {entry.finalScore}/100
                     </span>
                   </div>
                   <p className="mt-2 text-sm text-slate-600">{new Date(entry.createdAt).toLocaleString()}</p>

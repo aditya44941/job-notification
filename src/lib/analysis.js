@@ -1,12 +1,12 @@
 const SKILL_MAP = {
-  "Core CS": {
+  coreCS: {
     DSA: [/\bdsa\b/i, /data structures?/i, /algorithms?/i],
     OOP: [/\boop\b/i, /object[\s-]?oriented/i],
     DBMS: [/\bdbms\b/i, /database management/i],
     OS: [/\bos\b/i, /operating systems?/i],
     Networks: [/\bnetworks?\b/i, /computer networks?/i],
   },
-  Languages: {
+  languages: {
     Java: [/\bjava\b(?!script)/i],
     Python: [/\bpython\b/i],
     JavaScript: [/\bjavascript\b/i, /\bjs\b/i],
@@ -16,7 +16,7 @@ const SKILL_MAP = {
     "C#": [/\bc#\b/i, /c sharp/i],
     Go: [/\bgolang\b/i, /\bgo language\b/i],
   },
-  Web: {
+  web: {
     React: [/\breact(?:\.js)?\b/i],
     "Next.js": [/\bnext(?:\.js)?\b/i],
     "Node.js": [/\bnode(?:\.js)?\b/i],
@@ -24,14 +24,14 @@ const SKILL_MAP = {
     REST: [/\brest\b/i, /\brestful\b/i],
     GraphQL: [/\bgraphql\b/i],
   },
-  Data: {
+  data: {
     SQL: [/\bsql\b/i],
     MongoDB: [/\bmongodb\b/i, /\bmongo\b/i],
     PostgreSQL: [/\bpostgres(?:ql)?\b/i],
     MySQL: [/\bmysql\b/i],
     Redis: [/\bredis\b/i],
   },
-  "Cloud/DevOps": {
+  cloud: {
     AWS: [/\baws\b/i, /amazon web services/i],
     Azure: [/\bazure\b/i],
     GCP: [/\bgcp\b/i, /google cloud/i],
@@ -40,7 +40,7 @@ const SKILL_MAP = {
     "CI/CD": [/\bci\/?cd\b/i, /continuous integration/i, /continuous delivery/i],
     Linux: [/\blinux\b/i],
   },
-  Testing: {
+  testing: {
     Selenium: [/\bselenium\b/i],
     Cypress: [/\bcypress\b/i],
     Playwright: [/\bplaywright\b/i],
@@ -49,30 +49,76 @@ const SKILL_MAP = {
   },
 };
 
+const DEFAULT_OTHER_SKILLS = ["Communication", "Problem solving", "Basic coding", "Projects"];
+
+const CATEGORY_LABELS = {
+  coreCS: "Core CS",
+  languages: "Languages",
+  web: "Web",
+  data: "Data",
+  cloud: "Cloud/DevOps",
+  testing: "Testing",
+  other: "Other",
+};
+
+export function getSkillCategoryLabels() {
+  return CATEGORY_LABELS;
+}
+
+export function createEmptyExtractedSkills() {
+  return {
+    coreCS: [],
+    languages: [],
+    web: [],
+    data: [],
+    cloud: [],
+    testing: [],
+    other: [],
+  };
+}
+
+export function getAllSkillsFromExtracted(extractedSkills) {
+  if (!extractedSkills) return [];
+  return [...new Set(Object.values(extractedSkills).flat().filter(Boolean))];
+}
+
 function detectSkills(jdText) {
   const normalized = jdText || "";
-  const extracted = {};
+  const extracted = createEmptyExtractedSkills();
 
   Object.entries(SKILL_MAP).forEach(([category, skills]) => {
-    const found = Object.entries(skills)
+    extracted[category] = Object.entries(skills)
       .filter(([, patterns]) => patterns.some((pattern) => pattern.test(normalized)))
       .map(([skill]) => skill);
-
-    if (found.length > 0) {
-      extracted[category] = found;
-    }
   });
 
-  if (Object.keys(extracted).length === 0) {
-    return { General: ["General fresher stack"] };
+  const technicalCount = Object.entries(extracted)
+    .filter(([key]) => key !== "other")
+    .reduce((sum, [, arr]) => sum + arr.length, 0);
+
+  if (technicalCount === 0) {
+    extracted.other = [...DEFAULT_OTHER_SKILLS];
   }
 
   return extracted;
 }
 
+function hasSkill(extractedSkills, skill) {
+  return getAllSkillsFromExtracted(extractedSkills).includes(skill);
+}
+
+function isTechnicalProfile(extractedSkills) {
+  return ["coreCS", "languages", "web", "data", "cloud", "testing"].some(
+    (key) => (extractedSkills[key] || []).length > 0,
+  );
+}
+
+function toChecklistArray(roundItems) {
+  return Object.entries(roundItems).map(([roundTitle, items]) => ({ roundTitle, items }));
+}
+
 function buildChecklist(extractedSkills) {
-  const allSkills = Object.values(extractedSkills).flat();
-  const has = (skill) => allSkills.includes(skill);
+  const technical = isTechnicalProfile(extractedSkills);
 
   const round1 = [
     "Revise quantitative aptitude formulas and shortcut methods.",
@@ -82,22 +128,30 @@ function buildChecklist(extractedSkills) {
     "Recheck fundamental syntax in your primary language.",
   ];
 
-  if (has("Python") || has("Java") || has("JavaScript") || has("C++")) {
+  if (hasSkill(extractedSkills, "Python") || hasSkill(extractedSkills, "Java") || hasSkill(extractedSkills, "JavaScript") || hasSkill(extractedSkills, "C++")) {
     round1.push("Solve 8-10 warm-up language-based coding questions.");
   }
 
-  const round2 = [
-    "Practice arrays, strings, and hashing problems with time limits.",
-    "Revise recursion, stack/queue, and tree traversals.",
-    "Solve 2 medium DSA problems and explain trade-offs.",
-    "Review OS process/thread basics and scheduling concepts.",
-    "Revise DBMS normalization, ACID properties, and transactions.",
-  ];
+  const round2 = technical
+    ? [
+        "Practice arrays, strings, and hashing problems with time limits.",
+        "Revise recursion, stack/queue, and tree traversals.",
+        "Solve 2 medium DSA problems and explain trade-offs.",
+        "Review OS process/thread basics and scheduling concepts.",
+        "Revise DBMS normalization, ACID properties, and transactions.",
+      ]
+    : [
+        "Practice 3 foundational coding problems with explanation.",
+        "Review algorithm basics: sorting, searching, and complexity.",
+        "Revise computer fundamentals with simple examples.",
+        "Prepare structured answers for project fundamentals.",
+        "Practice problem-solving walkthroughs out loud.",
+      ];
 
-  if (has("Networks")) {
+  if (hasSkill(extractedSkills, "Networks")) {
     round2.push("Brush up on TCP/IP, HTTP lifecycle, and common status codes.");
   }
-  if (has("OOP")) {
+  if (hasSkill(extractedSkills, "OOP")) {
     round2.push("Revise OOP pillars with one practical code example each.");
   }
 
@@ -109,17 +163,20 @@ function buildChecklist(extractedSkills) {
     "Practice role-specific technical Q&A in mock format.",
   ];
 
-  if (has("React") || has("Next.js")) {
+  if (hasSkill(extractedSkills, "React") || hasSkill(extractedSkills, "Next.js")) {
     round3.push("Revise component lifecycle, state management, and rendering optimization.");
   }
-  if (has("Node.js") || has("Express") || has("REST") || has("GraphQL")) {
+  if (hasSkill(extractedSkills, "Node.js") || hasSkill(extractedSkills, "Express") || hasSkill(extractedSkills, "REST") || hasSkill(extractedSkills, "GraphQL")) {
     round3.push("Review API design, auth flow, and request/response validation.");
   }
-  if (has("SQL") || has("MongoDB") || has("PostgreSQL") || has("MySQL")) {
+  if (hasSkill(extractedSkills, "SQL") || hasSkill(extractedSkills, "MongoDB") || hasSkill(extractedSkills, "PostgreSQL") || hasSkill(extractedSkills, "MySQL")) {
     round3.push("Practice schema reasoning, indexing, and query optimization basics.");
   }
-  if (has("AWS") || has("Docker") || has("Kubernetes") || has("CI/CD")) {
+  if (hasSkill(extractedSkills, "AWS") || hasSkill(extractedSkills, "Docker") || hasSkill(extractedSkills, "Kubernetes") || hasSkill(extractedSkills, "CI/CD")) {
     round3.push("Explain deployment pipeline, containerization, and observability approach.");
+  }
+  if (!technical) {
+    round3.push("Prepare beginner-friendly project explanations with clear learning outcomes.");
   }
 
   const round4 = [
@@ -130,42 +187,47 @@ function buildChecklist(extractedSkills) {
     "Prepare 3 thoughtful questions to ask interviewer/manager.",
   ];
 
-  return {
+  return toChecklistArray({
     "Round 1: Aptitude / Basics": round1.slice(0, 8),
     "Round 2: DSA + Core CS": round2.slice(0, 8),
     "Round 3: Tech interview (projects + stack)": round3.slice(0, 8),
     "Round 4: Managerial / HR": round4.slice(0, 8),
-  };
+  });
 }
 
-function buildPlan(extractedSkills) {
-  const allSkills = Object.values(extractedSkills).flat();
-  const has = (skill) => allSkills.includes(skill);
+function buildPlan7Days(extractedSkills) {
+  const technical = isTechnicalProfile(extractedSkills);
 
   const day1 = [
     "Revise aptitude fundamentals and communication basics.",
-    "Review OS, DBMS, and OOP fundamentals with short notes.",
+    technical
+      ? "Review OS, DBMS, and OOP fundamentals with short notes."
+      : "Review basic coding syntax and logical reasoning fundamentals.",
   ];
-  const day2 = ["Continue Core CS revision and solve 20 MCQs across OS/DBMS/Networks."];
+  const day2 = [
+    technical
+      ? "Continue Core CS revision and solve 20 MCQs across OS/DBMS/Networks."
+      : "Practice beginner coding problems and summarize learnings.",
+  ];
   const day3 = ["Practice DSA: arrays, strings, hashing (5-6 medium problems)."];
   const day4 = ["Practice DSA: trees/graphs or dynamic programming with timed attempts."];
   const day5 = ["Align resume bullets to JD and prepare project walkthrough scripts."];
   const day6 = ["Run a mock interview: 60 minutes technical + behavioral round."];
   const day7 = ["Revise weak areas from mock feedback and create final cheat sheet."];
 
-  if (has("React") || has("Next.js")) {
+  if (hasSkill(extractedSkills, "React") || hasSkill(extractedSkills, "Next.js")) {
     day5.push("Frontend revision: state management, rendering flow, and performance tuning.");
   }
-  if (has("Node.js") || has("Express") || has("REST") || has("GraphQL")) {
+  if (hasSkill(extractedSkills, "Node.js") || hasSkill(extractedSkills, "Express") || hasSkill(extractedSkills, "REST") || hasSkill(extractedSkills, "GraphQL")) {
     day5.push("Backend/API revision: auth, error handling, and scalable endpoint design.");
   }
-  if (has("SQL") || has("PostgreSQL") || has("MySQL") || has("MongoDB")) {
+  if (hasSkill(extractedSkills, "SQL") || hasSkill(extractedSkills, "PostgreSQL") || hasSkill(extractedSkills, "MySQL") || hasSkill(extractedSkills, "MongoDB")) {
     day3.push("Practice 10 DB query tasks including joins/indexing use cases.");
   }
-  if (has("AWS") || has("Docker") || has("Kubernetes") || has("CI/CD")) {
+  if (hasSkill(extractedSkills, "AWS") || hasSkill(extractedSkills, "Docker") || hasSkill(extractedSkills, "Kubernetes") || hasSkill(extractedSkills, "CI/CD")) {
     day6.push("Discuss one deployment pipeline end-to-end with rollback strategy.");
   }
-  if (has("Selenium") || has("Cypress") || has("Playwright") || has("PyTest") || has("JUnit")) {
+  if (hasSkill(extractedSkills, "Selenium") || hasSkill(extractedSkills, "Cypress") || hasSkill(extractedSkills, "Playwright") || hasSkill(extractedSkills, "PyTest") || hasSkill(extractedSkills, "JUnit")) {
     day4.push("Write or review automation test cases for critical project flows.");
   }
 
@@ -217,10 +279,14 @@ const QUESTION_BANK = {
   Playwright: "What Playwright features help maintain cross-browser test confidence?",
   JUnit: "How do you structure JUnit test suites to keep feedback fast and meaningful?",
   PyTest: "How would you use fixtures and parametrization effectively in PyTest?",
+  Communication: "How do you explain a technical trade-off clearly to a non-technical stakeholder?",
+  "Problem solving": "How do you break down a broad problem into solvable technical steps?",
+  "Basic coding": "How do you validate correctness when solving beginner-level coding tasks?",
+  Projects: "What was your strongest project contribution and how did you measure impact?",
 };
 
 function buildQuestions(extractedSkills) {
-  const skills = Object.values(extractedSkills).flat();
+  const skills = getAllSkillsFromExtracted(extractedSkills);
   const questions = [];
 
   skills.forEach((skill) => {
@@ -251,9 +317,11 @@ function buildQuestions(extractedSkills) {
   return questions.slice(0, 10);
 }
 
-function calculateReadiness({ extractedSkills, company, role, jdText }) {
-  const categoryCount = Object.keys(extractedSkills).filter((k) => k !== "General").length;
-  const categoryScore = Math.min(categoryCount * 5, 30);
+function calculateBaseScore({ extractedSkills, company, role, jdText }) {
+  const detectedCategories = ["coreCS", "languages", "web", "data", "cloud", "testing"].filter(
+    (key) => (extractedSkills[key] || []).length > 0,
+  ).length;
+  const categoryScore = Math.min(detectedCategories * 5, 30);
 
   let score = 35 + categoryScore;
   if ((company || "").trim()) score += 10;
@@ -293,6 +361,7 @@ function inferCompanySize(company) {
   const name = (company || "").trim().toLowerCase();
   if (!name) return "Startup (<200)";
   if (ENTERPRISE_COMPANIES.some((known) => name.includes(known))) return "Enterprise (2000+)";
+  if (/technologies|systems|solutions|corp|private limited|pvt ltd/.test(name)) return "Mid-size (200–2000)";
   return "Startup (<200)";
 }
 
@@ -301,10 +370,12 @@ export function generateCompanyIntel({ company, jdText }) {
   const sizeCategory = inferCompanySize(companyName);
   const industry = inferIndustry(companyName, jdText);
 
-  const typicalHiringFocus =
-    sizeCategory === "Enterprise (2000+)"
-      ? "Structured DSA screening, strong core CS fundamentals, and consistent communication clarity."
-      : "Practical problem solving, strong stack depth, and ability to ship features end-to-end quickly.";
+  let typicalHiringFocus = "Practical problem solving, strong stack depth, and ability to ship features end-to-end quickly.";
+  if (sizeCategory === "Enterprise (2000+)") {
+    typicalHiringFocus = "Structured DSA screening, strong core CS fundamentals, and consistent communication clarity.";
+  } else if (sizeCategory === "Mid-size (200–2000)") {
+    typicalHiringFocus = "Balanced hiring: practical coding output with dependable CS fundamentals and collaboration readiness.";
+  }
 
   return {
     companyName: companyName || "Not provided",
@@ -315,39 +386,38 @@ export function generateCompanyIntel({ company, jdText }) {
   };
 }
 
-function buildRound(title, focus, whyItMatters) {
-  return { title, focus, whyItMatters };
+function buildRound(roundTitle, focusAreas, whyItMatters) {
+  return { roundTitle, focusAreas, whyItMatters };
 }
 
 export function generateRoundMapping({ extractedSkills, companyIntel }) {
-  const allSkills = Object.values(extractedSkills || {}).flat();
-  const has = (skill) => allSkills.includes(skill);
   const isEnterprise = companyIntel?.sizeCategory === "Enterprise (2000+)";
   const isStartup = companyIntel?.sizeCategory === "Startup (<200)";
-  const hasWebStack = has("React") || has("Next.js") || has("Node.js") || has("Express");
-  const hasDSA = has("DSA");
+  const hasDSA = hasSkill(extractedSkills, "DSA");
+  const hasWebStack =
+    hasSkill(extractedSkills, "React") || hasSkill(extractedSkills, "Next.js") || hasSkill(extractedSkills, "Node.js") || hasSkill(extractedSkills, "Express");
 
   if (isEnterprise && hasDSA) {
     return [
       buildRound(
         "Round 1: Online Test (DSA + Aptitude)",
-        "Timed coding and aptitude with elimination cutoff.",
-        "This round filters for problem-solving speed and core analytical baseline.",
+        ["Timed DSA", "Aptitude"],
+        "This round filters for problem-solving speed and analytical baseline.",
       ),
       buildRound(
         "Round 2: Technical (DSA + Core CS)",
-        "In-depth coding plus OS/DBMS/OOP fundamentals.",
-        "Interviewers validate depth, correctness, and reasoning under pressure.",
+        ["Coding depth", "Core CS fundamentals"],
+        "Interviewers validate technical correctness, depth, and decision quality.",
       ),
       buildRound(
         "Round 3: Tech + Projects",
-        "Project walkthrough with stack-specific follow-up questions.",
-        "This ensures your practical execution matches your resume claims.",
+        ["Project architecture", "Stack depth"],
+        "This validates practical ownership and ability to execute in production-like constraints.",
       ),
       buildRound(
         "Round 4: HR",
-        "Behavioral and role-fit conversation.",
-        "Final round checks communication maturity and long-term alignment.",
+        ["Communication", "Role fit"],
+        "Final evaluation checks collaboration readiness and long-term alignment.",
       ),
     ];
   }
@@ -355,19 +425,19 @@ export function generateRoundMapping({ extractedSkills, companyIntel }) {
   if (isStartup && hasWebStack) {
     return [
       buildRound(
-        "Round 1: Practical Coding",
-        "Build/debug feature-level tasks using real stack constraints.",
-        "Startups prioritize immediate execution ability over theoretical depth alone.",
+        "Round 1: Practical coding",
+        ["Feature implementation", "Debugging"],
+        "Startups prioritize immediate execution quality and shipping capability.",
       ),
       buildRound(
-        "Round 2: System Discussion",
-        "Architecture and trade-off conversation around your implementation.",
-        "Founders/leads test ownership mindset and pragmatic technical decisions.",
+        "Round 2: System discussion",
+        ["Architecture", "Trade-offs"],
+        "This reveals engineering judgment and ability to make pragmatic decisions.",
       ),
       buildRound(
-        "Round 3: Culture Fit",
-        "Team collaboration, communication, and ambiguity handling.",
-        "Small teams need high trust, adaptability, and proactive communication.",
+        "Round 3: Culture fit",
+        ["Ownership", "Communication"],
+        "Small teams depend on accountability, clarity, and adaptability.",
       ),
     ];
   }
@@ -376,62 +446,95 @@ export function generateRoundMapping({ extractedSkills, companyIntel }) {
     return [
       buildRound(
         "Round 1: Online Assessment",
-        "Aptitude, coding basics, and screening MCQs.",
-        "It establishes consistent baseline capability across large applicant pools.",
+        ["Aptitude", "Coding basics"],
+        "Large pipelines need standardized elimination based on measurable baseline.",
       ),
       buildRound(
-        "Round 2: Technical Fundamentals",
-        "Coding + fundamentals from role-relevant domains.",
-        "This validates technical consistency beyond memorized patterns.",
+        "Round 2: Technical fundamentals",
+        ["Core CS", "Problem solving"],
+        "This verifies engineering fundamentals beyond memorized patterns.",
       ),
       buildRound(
-        "Round 3: Project and Problem Solving",
-        "Discussion on implementation quality and debugging approach.",
-        "Interviewers assess applied engineering judgment and ownership.",
+        "Round 3: Project and problem solving",
+        ["Projects", "Debugging approach"],
+        "Interviewers assess execution maturity and technical ownership.",
       ),
       buildRound(
         "Round 4: HR / Managerial",
-        "Behavioral evaluation and role-fit.",
-        "This confirms communication quality and organizational alignment.",
+        ["Behavioral fit", "Communication"],
+        "This confirms collaboration style and organization fit.",
       ),
     ];
   }
 
   return [
     buildRound(
-      "Round 1: Practical Coding",
-      "Task-based coding aligned with role stack.",
-      "It quickly verifies if you can contribute in real project scenarios.",
+      "Round 1: Practical coding",
+      ["Coding implementation", "Time management"],
+      "It quickly verifies whether you can contribute in real project scenarios.",
     ),
     buildRound(
-      "Round 2: Technical Deep Dive",
-      "Projects, core fundamentals, and debugging/system reasoning.",
-      "This round validates decision-making depth and implementation maturity.",
+      "Round 2: Technical deep dive",
+      ["Fundamentals", "Projects"],
+      "This validates technical depth and quality of engineering decisions.",
     ),
     buildRound(
-      "Round 3: Culture Fit",
-      "Communication, collaboration style, and growth mindset.",
-      "Teams use this to evaluate long-term fit and execution reliability.",
+      "Round 3: Culture fit",
+      ["Communication", "Ownership mindset"],
+      "Teams evaluate execution reliability and long-term fit.",
     ),
   ];
 }
 
-export function generateAnalysis({ company, role, jdText }) {
+export function buildDefaultSkillConfidenceMap(extractedSkills) {
+  return getAllSkillsFromExtracted(extractedSkills).reduce((acc, skill) => {
+    acc[skill] = "practice";
+    return acc;
+  }, {});
+}
+
+export function computeFinalScore(baseScore, skillConfidenceMap) {
+  const entries = Object.entries(skillConfidenceMap || {});
+  const knowCount = entries.filter(([, value]) => value === "know").length;
+  const practiceCount = entries.length - knowCount;
+  return Math.max(0, Math.min(100, baseScore + knowCount * 2 - practiceCount * 2));
+}
+
+export function generateAnalysis({ company = "", role = "", jdText = "" }) {
   const extractedSkills = detectSkills(jdText);
   const checklist = buildChecklist(extractedSkills);
-  const plan = buildPlan(extractedSkills);
+  const plan7Days = buildPlan7Days(extractedSkills);
   const questions = buildQuestions(extractedSkills);
-  const readinessScore = calculateReadiness({ extractedSkills, company, role, jdText });
   const companyIntel = generateCompanyIntel({ company, jdText });
   const roundMapping = generateRoundMapping({ extractedSkills, companyIntel });
+  const baseScore = calculateBaseScore({ extractedSkills, company, role, jdText });
+  const skillConfidenceMap = buildDefaultSkillConfidenceMap(extractedSkills);
+  const finalScore = computeFinalScore(baseScore, skillConfidenceMap);
 
   return {
+    company: company || "",
+    role: role || "",
+    jdText,
     extractedSkills,
-    checklist,
-    plan,
-    questions,
-    readinessScore,
-    companyIntel,
     roundMapping,
+    checklist,
+    plan7Days,
+    questions,
+    baseScore,
+    skillConfidenceMap,
+    finalScore,
+    companyIntel,
+  };
+}
+
+export function createAnalysisEntry({ company = "", role = "", jdText = "" }) {
+  const analysis = generateAnalysis({ company, role, jdText });
+  const now = new Date().toISOString();
+
+  return {
+    id: crypto.randomUUID(),
+    createdAt: now,
+    updatedAt: now,
+    ...analysis,
   };
 }

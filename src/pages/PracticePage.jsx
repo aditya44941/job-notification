@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
-import { generateAnalysis } from "../lib/analysis";
+import { createAnalysisEntry } from "../lib/analysis";
 import { saveAnalysisEntry } from "../lib/history";
 
 function PracticePage() {
@@ -9,25 +9,11 @@ function PracticePage() {
   const [company, setCompany] = useState("");
   const [role, setRole] = useState("");
   const [jdText, setJdText] = useState("");
+  const isShortJD = jdText.trim().length > 0 && jdText.trim().length < 200;
 
   const handleAnalyze = (event) => {
     event.preventDefault();
-
-    const analysis = generateAnalysis({ company, role, jdText });
-    const entry = {
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-      company,
-      role,
-      jdText,
-      extractedSkills: analysis.extractedSkills,
-      plan: analysis.plan,
-      checklist: analysis.checklist,
-      questions: analysis.questions,
-      readinessScore: analysis.readinessScore,
-      companyIntel: analysis.companyIntel,
-      roundMapping: analysis.roundMapping,
-    };
+    const entry = createAnalysisEntry({ company, role, jdText });
 
     saveAnalysisEntry(entry);
     navigate(`/results?id=${encodeURIComponent(entry.id)}`);
@@ -83,6 +69,11 @@ function PracticePage() {
               className="w-full rounded-lg border border-slate-300 px-3 py-3 outline-none focus:border-primary"
               required
             />
+            {isShortJD ? (
+              <p className="text-sm text-amber-700">
+                This JD is too short to analyze deeply. Paste full JD for better output.
+              </p>
+            ) : null}
           </div>
 
           <button
