@@ -25,6 +25,8 @@ function PracticePage() {
       checklist: analysis.checklist,
       questions: analysis.questions,
       readinessScore: analysis.readinessScore,
+      companyIntel: analysis.companyIntel,
+      roundMapping: analysis.roundMapping,
     };
 
     saveAnalysisEntry(entry);

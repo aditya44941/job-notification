@@ -263,12 +263,167 @@ function calculateReadiness({ extractedSkills, company, role, jdText }) {
   return Math.min(score, 100);
 }
 
+const ENTERPRISE_COMPANIES = [
+  "amazon",
+  "infosys",
+  "tcs",
+  "wipro",
+  "accenture",
+  "google",
+  "microsoft",
+  "meta",
+  "ibm",
+  "deloitte",
+  "cognizant",
+];
+
+function inferIndustry(company, jdText) {
+  const text = `${company || ""} ${jdText || ""}`.toLowerCase();
+
+  if (/bank|fintech|payments|wallet|insurance/.test(text)) return "Financial Services";
+  if (/health|med|hospital|pharma/.test(text)) return "Healthcare Technology";
+  if (/retail|e-?commerce|marketplace|shopping/.test(text)) return "E-commerce";
+  if (/consult|services|outsourcing/.test(text)) return "Technology Services";
+  if (/saas|platform|cloud|product/.test(text)) return "Software Product";
+
+  return "Technology Services";
+}
+
+function inferCompanySize(company) {
+  const name = (company || "").trim().toLowerCase();
+  if (!name) return "Startup (<200)";
+  if (ENTERPRISE_COMPANIES.some((known) => name.includes(known))) return "Enterprise (2000+)";
+  return "Startup (<200)";
+}
+
+export function generateCompanyIntel({ company, jdText }) {
+  const companyName = (company || "").trim();
+  const sizeCategory = inferCompanySize(companyName);
+  const industry = inferIndustry(companyName, jdText);
+
+  const typicalHiringFocus =
+    sizeCategory === "Enterprise (2000+)"
+      ? "Structured DSA screening, strong core CS fundamentals, and consistent communication clarity."
+      : "Practical problem solving, strong stack depth, and ability to ship features end-to-end quickly.";
+
+  return {
+    companyName: companyName || "Not provided",
+    industry,
+    sizeCategory,
+    typicalHiringFocus,
+    demoNote: "Demo Mode: Company intel generated heuristically.",
+  };
+}
+
+function buildRound(title, focus, whyItMatters) {
+  return { title, focus, whyItMatters };
+}
+
+export function generateRoundMapping({ extractedSkills, companyIntel }) {
+  const allSkills = Object.values(extractedSkills || {}).flat();
+  const has = (skill) => allSkills.includes(skill);
+  const isEnterprise = companyIntel?.sizeCategory === "Enterprise (2000+)";
+  const isStartup = companyIntel?.sizeCategory === "Startup (<200)";
+  const hasWebStack = has("React") || has("Next.js") || has("Node.js") || has("Express");
+  const hasDSA = has("DSA");
+
+  if (isEnterprise && hasDSA) {
+    return [
+      buildRound(
+        "Round 1: Online Test (DSA + Aptitude)",
+        "Timed coding and aptitude with elimination cutoff.",
+        "This round filters for problem-solving speed and core analytical baseline.",
+      ),
+      buildRound(
+        "Round 2: Technical (DSA + Core CS)",
+        "In-depth coding plus OS/DBMS/OOP fundamentals.",
+        "Interviewers validate depth, correctness, and reasoning under pressure.",
+      ),
+      buildRound(
+        "Round 3: Tech + Projects",
+        "Project walkthrough with stack-specific follow-up questions.",
+        "This ensures your practical execution matches your resume claims.",
+      ),
+      buildRound(
+        "Round 4: HR",
+        "Behavioral and role-fit conversation.",
+        "Final round checks communication maturity and long-term alignment.",
+      ),
+    ];
+  }
+
+  if (isStartup && hasWebStack) {
+    return [
+      buildRound(
+        "Round 1: Practical Coding",
+        "Build/debug feature-level tasks using real stack constraints.",
+        "Startups prioritize immediate execution ability over theoretical depth alone.",
+      ),
+      buildRound(
+        "Round 2: System Discussion",
+        "Architecture and trade-off conversation around your implementation.",
+        "Founders/leads test ownership mindset and pragmatic technical decisions.",
+      ),
+      buildRound(
+        "Round 3: Culture Fit",
+        "Team collaboration, communication, and ambiguity handling.",
+        "Small teams need high trust, adaptability, and proactive communication.",
+      ),
+    ];
+  }
+
+  if (isEnterprise) {
+    return [
+      buildRound(
+        "Round 1: Online Assessment",
+        "Aptitude, coding basics, and screening MCQs.",
+        "It establishes consistent baseline capability across large applicant pools.",
+      ),
+      buildRound(
+        "Round 2: Technical Fundamentals",
+        "Coding + fundamentals from role-relevant domains.",
+        "This validates technical consistency beyond memorized patterns.",
+      ),
+      buildRound(
+        "Round 3: Project and Problem Solving",
+        "Discussion on implementation quality and debugging approach.",
+        "Interviewers assess applied engineering judgment and ownership.",
+      ),
+      buildRound(
+        "Round 4: HR / Managerial",
+        "Behavioral evaluation and role-fit.",
+        "This confirms communication quality and organizational alignment.",
+      ),
+    ];
+  }
+
+  return [
+    buildRound(
+      "Round 1: Practical Coding",
+      "Task-based coding aligned with role stack.",
+      "It quickly verifies if you can contribute in real project scenarios.",
+    ),
+    buildRound(
+      "Round 2: Technical Deep Dive",
+      "Projects, core fundamentals, and debugging/system reasoning.",
+      "This round validates decision-making depth and implementation maturity.",
+    ),
+    buildRound(
+      "Round 3: Culture Fit",
+      "Communication, collaboration style, and growth mindset.",
+      "Teams use this to evaluate long-term fit and execution reliability.",
+    ),
+  ];
+}
+
 export function generateAnalysis({ company, role, jdText }) {
   const extractedSkills = detectSkills(jdText);
   const checklist = buildChecklist(extractedSkills);
   const plan = buildPlan(extractedSkills);
   const questions = buildQuestions(extractedSkills);
   const readinessScore = calculateReadiness({ extractedSkills, company, role, jdText });
+  const companyIntel = generateCompanyIntel({ company, jdText });
+  const roundMapping = generateRoundMapping({ extractedSkills, companyIntel });
 
   return {
     extractedSkills,
@@ -276,5 +431,7 @@ export function generateAnalysis({ company, role, jdText }) {
     plan,
     questions,
     readinessScore,
+    companyIntel,
+    roundMapping,
   };
 }
