@@ -1,0 +1,202 @@
+:root {
+  --bg: #f4f8fb;
+  --panel: #ffffff;
+  --ink: #132a3a;
+  --muted: #5a7282;
+  --brand: #00757f;
+  --brand-soft: #d8eff1;
+  --alert: #b7373c;
+  --line: #d7e3ea;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(160deg, #edf5f8 0%, #f8fbfd 60%, #eaf2f7 100%);
+  color: var(--ink);
+}
+
+header {
+  padding: 1.5rem 2rem 1rem;
+  border-bottom: 1px solid var(--line);
+  background: #f9fcffcc;
+  backdrop-filter: blur(4px);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+header h1 {
+  margin: 0;
+}
+
+header p {
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+}
+
+main {
+  max-width: 1150px;
+  margin: 1rem auto 2rem;
+  padding: 0 1rem;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.9rem;
+}
+
+.card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.card strong {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 1.5rem;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.panel h2 {
+  margin-top: 0;
+}
+
+.grid-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.6rem;
+}
+
+.grid-form textarea,
+.stack-form textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.stack-form {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 0.8rem;
+}
+
+input,
+select,
+textarea,
+button {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.6rem 0.65rem;
+  font: inherit;
+}
+
+button {
+  border: none;
+  background: var(--brand);
+  color: #fff;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(0.95);
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.list {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.list-item {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.75rem;
+}
+
+.list-item h3,
+.list-item h4 {
+  margin: 0 0 0.25rem;
+}
+
+.list-item p {
+  margin: 0.2rem 0;
+  color: var(--muted);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
+
+.tag {
+  background: var(--brand-soft);
+  color: var(--brand);
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+.row-actions {
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.4rem;
+}
+
+.row-actions button.secondary {
+  background: #eef4f9;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+.row-actions button.danger {
+  background: var(--alert);
+}
+
+.compact .list-item {
+  padding: 0.55rem;
+}
+
+@media (max-width: 760px) {
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  header {
+    position: static;
+  }
+}
